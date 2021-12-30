@@ -1,6 +1,8 @@
-import requests
-from bs4 import BeautifulSoup as bs
+import csv
 import json
+import requests
+import datetime
+from bs4 import BeautifulSoup as bs
 
 class PropertyScraper():
     def __init__(self):
@@ -56,7 +58,7 @@ class PropertyScraper():
                         self.properties.append(
                             {
                                 'id': property['id'].split("-")[1],
-                                'propertlyLink': "https://www.rightmove.co.uk/properties/{}".format(property['id'].split("-")[1]),
+                                'propertyLink': "https://www.rightmove.co.uk/properties/{}".format(property['id'].split("-")[1]),
                                 'propertyImg' : property.find("img", {"alt": "Property Image 1"})['src'],
                                 'propertyType' : property.find("h2", {"class": "propertyCard-title"}).text.strip(),
                                 'propertyPrice' : property.find("span", {"class": "propertyCard-priceValue"}).text,
@@ -70,11 +72,13 @@ class PropertyScraper():
 
 
                     if self.count >= totalPageCountIndex:
+                        self.saveToCsvFile()
                         self.saveToJsonFile()
                         break
 
                 elif response.status_code == 400:
                     print("Page Not Found")
+                    self.saveToCsvFile()
                     self.saveToJsonFile()
                     break
                 
@@ -83,8 +87,35 @@ class PropertyScraper():
                 print(e)
 
     def saveToJsonFile(self):
-        with open('data.json', 'w', encoding='utf-8') as f:
+        with open('data/output.json', 'w', encoding='utf-8') as f:
             json.dump(self.properties, f, ensure_ascii=False, indent=4)
+
+    def saveToCsvFile(self, header=True):
+        filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        with open(f"data/{filename}.csv", "w", newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=[
+            'Id',
+            'Property Type',
+            'Property Price',
+            'Property Image',
+            'Property Link',
+            'Address',
+            'Added Date',
+            'Contact Number',
+        ])
+            if header:
+                writer.writeheader()
+            for item in self.properties:
+                writer.writerow({
+                    'Id': item['id'],
+                    'Property Type': item['propertyType'],
+                    'Property Price': item["propertyPrice"],
+                    'Property Image': item["propertyImg"],
+                    'Property Link': item["propertyLink"],
+                    'Address': item["address"],
+                    'Added Date': item["addedDate"],
+                    'Contact Number': item["contactNumber"]
+                }) 
 
 
 scraper = PropertyScraper()
