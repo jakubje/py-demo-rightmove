@@ -1,3 +1,4 @@
+import os
 import csv
 import json
 import requests
@@ -25,10 +26,16 @@ class PropertyScraper():
         self.count = 0
         self.properties = list()
 
-    def scrape(self):
+    def setup(self):
+        if not os.path.exists('data'):
+            os.makedirs('data')
 
+
+    def scrape(self):
+        self.setup()
+        
         while True:
-            print(self.count)
+            print(f"Scraping index... {self.count}")
             try:
                 params = (
                     ('locationIdentifier', 'REGION^87490'),
